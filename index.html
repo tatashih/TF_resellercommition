@@ -1,0 +1,1871 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TATA FLOW 分潤系統</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;600;700&family=Noto+Sans+TC:wght@300;400;500&display=swap');
+
+  :root {
+    --cream: #faf8f5; --warm-white: #f5f0e8; --gold: #c9a96e; --gold-light: #e8d5b0;
+    --dark: #2a2118; --mid: #5a4a3a; --light: #8a7a6a; --border: #ddd5c5;
+    --red: #c0392b; --green: #27ae60; --blue: #2980b9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans TC', sans-serif; background: var(--cream); color: var(--dark); min-height: 100vh; }
+
+  /* LOGIN */
+  #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; background: linear-gradient(160deg, #faf8f5 0%, #f0e8d8 100%); }
+  .brand-logo { font-family: 'Noto Serif TC', serif; font-size: 2rem; font-weight: 700; letter-spacing: 0.15em; color: var(--dark); margin-bottom: 0.25rem; }
+  .brand-sub { font-size: 0.75rem; letter-spacing: 0.3em; color: var(--light); text-transform: uppercase; margin-bottom: 3rem; }
+  .login-card { background: white; border: 1px solid var(--border); padding: 2.5rem 2rem; width: 100%; max-width: 360px; box-shadow: 0 8px 40px rgba(42,33,24,0.08); }
+  .login-card h2 { font-family: 'Noto Serif TC', serif; font-size: 1.1rem; font-weight: 600; margin-bottom: 1.5rem; color: var(--mid); text-align: center; letter-spacing: 0.05em; }
+
+  .field { margin-bottom: 1rem; }
+  .field label { display: block; font-size: 0.75rem; letter-spacing: 0.1em; color: var(--light); margin-bottom: 0.4rem; }
+  .field input, .field select { width: 100%; border: 1px solid var(--border); padding: 0.65rem 0.85rem; font-family: 'Noto Sans TC', sans-serif; font-size: 0.9rem; color: var(--dark); background: var(--cream); outline: none; transition: border-color 0.2s; }
+  .field input:focus, .field select:focus { border-color: var(--gold); }
+
+  .btn-primary { width: 100%; background: var(--dark); color: white; border: none; padding: 0.8rem; font-family: 'Noto Sans TC', sans-serif; font-size: 0.9rem; letter-spacing: 0.1em; cursor: pointer; margin-top: 0.5rem; transition: background 0.2s; }
+  .btn-primary:hover { background: var(--mid); }
+  .error-msg { color: var(--red); font-size: 0.8rem; text-align: center; margin-top: 0.75rem; }
+
+  /* APP */
+  #app-screen { display: none; }
+  .top-bar { background: var(--dark); padding: 0.9rem 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+  .top-bar .brand { color: white; font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 0.1em; }
+  .top-bar .user-info { color: var(--gold-light); font-size: 0.8rem; display: flex; align-items: center; gap: 1rem; }
+  .btn-logout { color: var(--gold-light); background: none; border: 1px solid var(--gold); padding: 0.3rem 0.8rem; font-size: 0.75rem; cursor: pointer; font-family: 'Noto Sans TC', sans-serif; transition: all 0.2s; }
+  .btn-logout:hover { background: var(--gold); color: var(--dark); }
+
+  .tabs { display: flex; background: white; border-bottom: 1px solid var(--border); padding: 0 1.5rem; }
+  .tab { padding: 0.9rem 1.2rem; font-size: 0.85rem; color: var(--light); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; letter-spacing: 0.05em; }
+  .tab.active { color: var(--dark); border-bottom-color: var(--gold); font-weight: 500; }
+
+  .content { padding: 1.5rem; max-width: 820px; margin: 0 auto; }
+  .section-title { font-family: 'Noto Serif TC', serif; font-size: 1rem; color: var(--mid); margin-bottom: 1.25rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); letter-spacing: 0.05em; }
+  .card { background: white; border: 1px solid var(--border); padding: 1.5rem; margin-bottom: 1.25rem; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 520px) { .form-grid { grid-template-columns: 1fr; } }
+
+  .commission-preview { background: var(--warm-white); border: 1px solid var(--gold-light); padding: 1rem 1.25rem; margin-top: 0.75rem; display: flex; justify-content: space-between; align-items: center; }
+  .commission-preview .label { font-size: 0.8rem; color: var(--light); }
+  .commission-preview .amount { font-family: 'Noto Serif TC', serif; font-size: 1.5rem; color: var(--gold); font-weight: 600; }
+
+  .btn-submit { background: var(--gold); color: var(--dark); border: none; padding: 0.85rem 2rem; font-family: 'Noto Serif TC', serif; font-size: 0.95rem; letter-spacing: 0.1em; cursor: pointer; transition: all 0.2s; font-weight: 600; }
+  .btn-submit:hover { background: var(--dark); color: white; }
+  .btn-submit:disabled { background: #ccc; color: #999; cursor: not-allowed; }
+  .btn-secondary { background: white; color: var(--mid); border: 1px solid var(--border); padding: 0.7rem 1.4rem; font-family: 'Noto Sans TC', sans-serif; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; }
+  .btn-secondary:hover { border-color: var(--gold); color: var(--dark); }
+  .btn-row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; align-items: center; }
+
+  /* SUMMARY */
+  .summary-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1.25rem; }
+  @media (max-width: 520px) { .summary-cards { grid-template-columns: 1fr 1fr; } }
+  .summary-card { background: white; border: 1px solid var(--border); padding: 1rem; }
+  .summary-card .s-label { font-size: 0.72rem; color: var(--light); letter-spacing: 0.05em; margin-bottom: 0.3rem; }
+  .summary-card .s-value { font-family: 'Noto Serif TC', serif; font-size: 1.3rem; font-weight: 600; color: var(--dark); }
+  .summary-card .s-unit { font-size: 0.75rem; color: var(--light); }
+
+  /* RECORDS */
+  .month-group { margin-bottom: 1.5rem; }
+  .month-header { display: flex; justify-content: space-between; align-items: center; background: var(--warm-white); border: 1px solid var(--border); padding: 0.75rem 1rem; cursor: pointer; }
+  .month-header:hover { background: #ede8dc; }
+  .month-header .mh-left { display: flex; align-items: center; gap: 1rem; }
+  .month-header .mh-title { font-family: 'Noto Serif TC', serif; font-size: 0.95rem; font-weight: 600; color: var(--dark); }
+  .month-header .mh-stats { font-size: 0.78rem; color: var(--light); }
+  .month-header .mh-total { font-family: 'Noto Serif TC', serif; font-size: 1rem; color: var(--green); font-weight: 600; }
+  .month-header .mh-chevron { color: var(--light); font-size: 0.8rem; transition: transform 0.2s; }
+  .month-header.open .mh-chevron { transform: rotate(180deg); }
+
+  .month-body { display: none; border: 1px solid var(--border); border-top: none; }
+  .month-body.open { display: block; }
+
+  .month-actions { padding: 0.75rem 1rem; background: #fdfaf6; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+  .month-actions .ma-info { font-size: 0.8rem; color: var(--mid); }
+  .btn-gen-report { background: var(--dark); color: white; border: none; padding: 0.45rem 1.1rem; font-family: 'Noto Serif TC', serif; font-size: 0.82rem; cursor: pointer; letter-spacing: 0.05em; transition: all 0.2s; }
+  .btn-gen-report:hover { background: var(--gold); color: var(--dark); }
+
+  .records-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  .records-table th { background: var(--warm-white); border: 1px solid var(--border); padding: 0.55rem 0.8rem; text-align: left; font-weight: 500; color: var(--mid); white-space: nowrap; }
+  .records-table td { border: 1px solid var(--border); padding: 0.55rem 0.8rem; color: var(--dark); vertical-align: middle; }
+  .records-table tr:hover td { background: #faf8f5; }
+  .records-table .btn-delete-rec { background: none; border: 1px solid #f1948a; padding: 0.15rem 0.55rem; font-size: 0.72rem; cursor: pointer; color: var(--red); transition: all 0.2s; white-space: nowrap; }
+  .records-table .btn-delete-rec:hover { background: var(--red); color: white; }
+  .empty-state { text-align: center; padding: 3rem; color: var(--light); font-size: 0.9rem; }
+
+  /* 手機版表格優化 */
+  @media (max-width: 600px) {
+    .records-table { font-size: 0.75rem; }
+    .records-table th, .records-table td { padding: 0.4rem 0.45rem; }
+    /* 手機隱藏分潤% 欄（可從分潤金額推算）*/
+    .records-table th:nth-child(5), .records-table td:nth-child(5) { display: none; }
+    .month-header { flex-direction: column; align-items: flex-start; gap: 0.3rem; padding: 0.65rem 0.85rem; }
+    .month-header .mh-left { flex-direction: column; gap: 0.2rem; }
+    .month-actions { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+    .tab { padding: 0.75rem 0.8rem; font-size: 0.78rem; }
+    .content { padding: 1rem 0.75rem; }
+    .card { padding: 1rem; }
+    .form-grid { grid-template-columns: 1fr; }
+    .btn-row { flex-direction: column; }
+    .btn-submit, .btn-secondary { width: 100%; text-align: center; }
+    .summary-cards { grid-template-columns: 1fr 1fr; }
+    .report-toolbar { flex-direction: column; gap: 0.5rem; align-items: flex-start; }
+    .report-toolbar-btns { flex-wrap: wrap; }
+  }
+
+
+  .status-badge { display: inline-block; padding: 0.12rem 0.5rem; font-size: 0.7rem; letter-spacing: 0.04em; }
+  .status-待審核 { background: #fef9e7; color: #b7950b; border: 1px solid #f9e79f; }
+  .status-已核准 { background: #eafaf1; color: #1e8449; border: 1px solid #a9dfbf; }
+  .status-已放款 { background: #eaf3fb; color: #1a5276; border: 1px solid #a9cce3; }
+  .status-退回 { background: #fdedec; color: #922b21; border: 1px solid #f1948a; }
+
+  /* LOADING */
+  .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(42,33,24,0.5); z-index: 200; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; }
+  .loading-overlay.show { display: flex; }
+  .spinner { width: 36px; height: 36px; border: 3px solid rgba(201,169,110,0.3); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { color: white; font-size: 0.9rem; letter-spacing: 0.05em; }
+
+  /* MODAL */
+  #report-modal { display: none; position: fixed; inset: 0; background: rgba(42,33,24,0.6); z-index: 100; overflow-y: auto; padding: 1rem; }
+  .report-wrapper { background: white; max-width: 700px; margin: 2rem auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+  .report-toolbar { background: var(--dark); padding: 0.8rem 1.2rem; display: flex; justify-content: space-between; align-items: center; }
+  .report-toolbar span { color: var(--gold-light); font-size: 0.85rem; }
+  .report-toolbar-btns { display: flex; gap: 0.5rem; }
+  .btn-print { background: var(--gold); color: var(--dark); border: none; padding: 0.4rem 1rem; font-size: 0.8rem; cursor: pointer; font-weight: 600; }
+  .btn-close-modal { background: none; color: white; border: 1px solid rgba(255,255,255,0.3); padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer; }
+
+  /* LABOR DOC */
+  .labor-doc { padding: 1.5rem 2rem; font-family: '標楷體', 'DFKai-SB', 'BiauKai', serif; font-size: 13px; line-height: 1.5; color: #000; }
+  .labor-doc h1 { text-align: center; font-size: 20px; font-weight: bold; margin-bottom: 0.3rem; letter-spacing: 0.1em; }
+  .labor-doc .sub-title { text-align: center; font-size: 13px; margin-bottom: 1rem; color: #444; }
+  .labor-doc .info-table { width: 100%; border-collapse: collapse; margin-bottom: 0.6rem; }
+  .labor-doc .info-table td { border: 1px solid #333; padding: 0.3rem 0.6rem; vertical-align: middle; }
+  .labor-doc .info-table input { border: none; outline: none; background: transparent; font-family: inherit; font-size: 13px; width: 100%; color: #000; }
+  .labor-doc .detail-table { width: 100%; border-collapse: collapse; margin-bottom: 0.6rem; }
+  .labor-doc .detail-table td { border: 1px solid #333; padding: 0.3rem 0.7rem; vertical-align: middle; }
+  .labor-doc .detail-table input { border: none; outline: none; background: transparent; font-family: inherit; font-size: 13px; color: #000; }
+  .labor-doc .order-list-table { width: 100%; border-collapse: collapse; margin: 0.5rem 0 1rem; font-size: 12px; }
+  .labor-doc .order-list-table th { background: #f5f0e8; border: 1px solid #999; padding: 0.3rem 0.5rem; text-align: center; }
+  .labor-doc .order-list-table td { border: 1px solid #999; padding: 0.3rem 0.5rem; text-align: center; }
+  .labor-doc .order-list-table tr:last-child td { font-weight: bold; background: #faf8f5; }
+  .labor-doc .id-card-row { display: grid; grid-template-columns: 1fr 1fr; }
+  .labor-doc .id-cell { border: 1px solid #333; padding: 0.5rem; text-align: center; min-height: 150px; height: auto; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 0.4rem; }
+  .labor-doc .id-cell img { max-width: 100%; max-height: 140px; width: auto; object-fit: contain; display: block; }
+
+  /* ADMIN */
+  .admin-note { background: var(--warm-white); border-left: 3px solid var(--gold); padding: 0.75rem 1rem; font-size: 0.82rem; color: var(--mid); margin-bottom: 1.25rem; line-height: 1.6; }
+  .product-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 0; border-bottom: 1px solid var(--border); }
+  .product-row:last-child { border-bottom: none; }
+  .product-row .pname-input { flex: 1; border: 1px solid var(--border); padding: 0.35rem 0.5rem; font-family: 'Noto Sans TC', sans-serif; font-size: 0.88rem; color: var(--dark); background: var(--cream); outline: none; }
+  .product-row .pname-input:focus { border-color: var(--gold); }
+  .product-row input[type="number"] { width: 70px; border: 1px solid var(--border); padding: 0.35rem 0.5rem; text-align: center; font-family: 'Noto Sans TC', sans-serif; font-size: 0.88rem; color: var(--dark); background: var(--cream); outline: none; }
+  .product-row input[type="number"]:focus { border-color: var(--gold); }
+  .product-row .unit { font-size: 0.8rem; color: var(--light); }
+  .agents-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-bottom: 1rem; }
+  .agents-table th { background: var(--warm-white); border: 1px solid var(--border); padding: 0.55rem 0.8rem; text-align: left; color: var(--mid); font-weight: 500; }
+  .agents-table td { border: 1px solid var(--border); padding: 0.55rem 0.8rem; color: var(--dark); }
+  .agents-table input { border: none; outline: none; background: transparent; font-family: 'Noto Sans TC', sans-serif; font-size: 0.85rem; width: 100%; color: var(--dark); }
+  .agents-table input:focus { background: #faf8f5; }
+  .btn-add-row { background: none; border: 1px dashed var(--border); padding: 0.6rem; width: 100%; font-size: 0.82rem; color: var(--light); cursor: pointer; transition: all 0.2s; letter-spacing: 0.05em; margin-bottom: 1rem; }
+  .btn-add-row:hover { border-color: var(--gold); color: var(--gold); }
+  .save-indicator { font-size: 0.75rem; color: var(--green); opacity: 0; transition: opacity 0.3s; margin-left: 0.5rem; }
+  .save-indicator.show { opacity: 1; }
+  .badge { display: inline-block; background: var(--gold-light); color: var(--mid); font-size: 0.7rem; padding: 0.15rem 0.5rem; vertical-align: middle; }
+  .notion-link { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--blue); text-decoration: none; padding: 0.3rem 0.7rem; border: 1px solid #a9cce3; background: #eaf3fb; }
+  .notion-link:hover { background: #d5e8f7; }
+
+  .no-print { }
+  @media print {
+    @page {
+      margin: 10mm 12mm;
+      /* 隱藏瀏覽器預設頁首頁尾 */
+    }
+    body * { visibility: hidden; }
+    #report-modal, #report-modal * { visibility: visible; }
+    #report-modal { position: absolute; inset: 0; background: white; padding: 0; }
+    .report-toolbar { display: none; }
+    .report-wrapper { box-shadow: none; margin: 0; }
+    .no-print { display: none !important; }
+    /* 身分證放大並完整顯示 */
+    .labor-doc .id-card-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0; page-break-inside: avoid; }
+    .labor-doc .id-cell { height: 160px !important; padding: 0.5rem !important; }
+    .labor-doc .id-cell img { max-width: 100% !important; max-height: 150px !important; width: auto !important; object-fit: contain !important; display: block !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">處理中...</div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="brand-logo">TATA FLOW</div>
+  <div class="brand-sub">Commission System</div>
+  <div class="login-card">
+    <h2>分潤系統登入</h2>
+    <div class="field"><label>代理商編號</label><input type="text" id="login-id" placeholder="請輸入您的編號" autocomplete="off"></div>
+    <div class="field"><label>密碼</label><input type="password" id="login-pw" placeholder="請輸入密碼"></div>
+    <button class="btn-primary" onclick="doLogin()">登入</button>
+    <div class="error-msg" id="login-error"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-screen">
+  <div class="top-bar">
+    <div class="brand">TATA FLOW</div>
+    <div class="user-info">
+      <span id="user-display"></span>
+      <button class="btn-logout" onclick="doLogout()">登出</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('input')">輸入訂單</div>
+    <div class="tab" onclick="switchTab('records')">分潤紀錄 &amp; 勞報單</div>
+    <div class="tab" id="project-tab" style="display:none" onclick="switchTab('project')">專案合作</div>
+    <div class="tab" id="admin-tab" style="display:none" onclick="switchTab('admin')">後台設定</div>
+  </div>
+
+  <!-- INPUT TAB -->
+  <div id="tab-input" class="content">
+    <div class="summary-cards" id="summary-cards" style="display:none">
+      <div class="summary-card"><div class="s-label">本月訂單數</div><div class="s-value" id="sum-orders">0</div><div class="s-unit">筆</div></div>
+      <div class="summary-card"><div class="s-label">本月訂單總額</div><div class="s-value" id="sum-revenue">0</div><div class="s-unit">NTS</div></div>
+      <div class="summary-card"><div class="s-label">本月應得分潤</div><div class="s-value" id="sum-commission">0</div><div class="s-unit">NTS</div></div>
+    </div>
+    <div class="card">
+      <div class="section-title">新增訂單</div>
+      <div class="form-grid">
+        <div class="field"><label>選擇產品</label>
+          <select id="order-product" onchange="updatePreview()"><option value="">— 請選擇 —</option></select>
+        </div>
+        <div class="field"><label>訂單日期</label><input type="date" id="order-date"></div>
+        <div class="field"><label>訂單編號</label><input type="text" id="order-num" placeholder="例：ORD-20250501-001"></div>
+        <div class="field"><label>訂單金額 (NTS)</label><input type="number" id="order-amount" placeholder="0" oninput="updatePreview()"></div>
+        <div class="field"><label>備註（選填）</label><input type="text" id="order-note" placeholder="可填買家姓名等"></div>
+      </div>
+      <div class="commission-preview" id="commission-preview" style="display:none">
+        <div><div class="label">本筆應得分潤</div><div style="font-size:0.75rem;color:var(--light)" id="preview-rate"></div></div>
+        <div style="text-align:right"><div class="amount" id="preview-amount">NT$0</div></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-submit" id="btn-submit" onclick="submitOrder()">確認送出</button>
+        <button class="btn-secondary" onclick="clearForm()">清除</button>
+      </div>
+      <div style="font-size:0.75rem;color:var(--light);margin-top:0.75rem;">💡 輸入完當月所有訂單後，到「分潤紀錄」頁面選擇月份，一鍵生成當月勞報單</div>
+    </div>
+  </div>
+
+  <!-- RECORDS TAB -->
+  <div id="tab-records" class="content" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+      <div class="section-title" style="margin-bottom:0;border:none;padding-bottom:0;">分潤紀錄 &amp; 勞報單</div>
+      <button class="btn-secondary" onclick="loadMyRecords()" style="padding:0.4rem 1rem;font-size:0.8rem;">↻ 重新整理</button>
+    </div>
+    <div id="records-container">
+      <div class="empty-state">載入中...</div>
+    </div>
+  </div>
+
+  <!-- PROJECT TAB -->
+  <div id="tab-project" class="content" style="display:none">
+    <div class="card">
+      <div class="section-title">發送專案合作勞報單</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>合作對象姓名</label>
+          <input type="text" id="proj-name" placeholder="例：王小明">
+        </div>
+        <div class="field">
+          <label>合作金額 (NTS)</label>
+          <input type="number" id="proj-amount" placeholder="0" oninput="updateProjPreview()">
+        </div>
+        <div class="field" style="grid-column:1/-1">
+          <label>專案名稱／內容</label>
+          <input type="text" id="proj-title" placeholder="例：品牌合作拍攝、課程講師費…">
+        </div>
+        <div class="field">
+          <label>合作日期</label>
+          <input type="date" id="proj-date">
+        </div>
+        <div class="field">
+          <label>備註（選填）</label>
+          <input type="text" id="proj-note" placeholder="">
+        </div>
+      </div>
+
+      <div class="commission-preview" id="proj-preview" style="display:none">
+        <div><div class="label">合作金額</div></div>
+        <div style="text-align:right"><div class="amount" id="proj-preview-amount">NT$0</div></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-submit" onclick="generateProjectLink()">產生連結</button>
+        <button class="btn-secondary" onclick="clearProjForm()">清除</button>
+      </div>
+    </div>
+
+    <!-- 產生的連結 -->
+    <div class="card" id="proj-link-card" style="display:none">
+      <div class="section-title">複製連結傳給對方</div>
+      <div style="background:var(--warm-white);border:1px solid var(--border);padding:0.75rem 1rem;word-break:break-all;font-size:0.8rem;color:var(--mid);margin-bottom:1rem;" id="proj-link-text"></div>
+      <div class="btn-row">
+        <button class="btn-submit" onclick="copyProjLink()">📋 複製連結</button>
+        <button class="btn-secondary" onclick="openProjLink()">預覽</button>
+      </div>
+      <div style="font-size:0.75rem;color:var(--light);margin-top:0.75rem;">對方打開連結後填寫資料、簽名、上傳身分證，送出後你會收到 Email</div>
+    </div>
+  </div>
+
+  <!-- ADMIN TAB -->
+  <div id="tab-admin" class="content" style="display:none">
+    <div class="admin-note">
+      ⚙️ 此頁面僅 ADMIN 可見。小團主送出申報後資料會寫入 Google Sheet，請前往審核。<br><br>
+      <a class="notion-link" href="https://docs.google.com/spreadsheets/d/1gVhWlGXl1Il7olVAUxZhTmJ6UTaEQYU6IZRtimTMmGY" target="_blank">📊 前往 Google Sheet 審核</a>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Google Sheet 串接設定</div>
+      <div class="field">
+        <label>Apps Script 網址（部署後貼上）</label>
+        <input type="text" id="apps-script-url" placeholder="https://script.google.com/macros/s/..." style="font-size:0.8rem;">
+      </div>
+      <div class="btn-row">
+        <button class="btn-submit" onclick="saveScriptUrl()">儲存網址</button>
+        <span class="save-indicator" id="save-url-indicator">✓ 已儲存</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title">產品分潤設定</div>
+      <div id="products-list"></div>
+      <button class="btn-add-row" onclick="addProduct()">＋ 新增產品</button>
+      <div class="btn-row">
+        <button class="btn-submit" onclick="saveProducts()">儲存產品設定</button>
+        <span class="save-indicator" id="save-product-indicator">✓ 已儲存</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title">小團主帳號管理</div>
+      <table class="agents-table">
+        <thead><tr><th>編號（登入帳號）</th><th>姓名</th><th>密碼</th><th>操作</th></tr></thead>
+        <tbody id="agents-body"></tbody>
+      </table>
+      <button class="btn-add-row" onclick="addAgent()">＋ 新增小團主</button>
+      <div class="btn-row">
+        <button class="btn-submit" onclick="saveAgents()">儲存帳號設定</button>
+        <span class="save-indicator" id="save-agent-indicator">✓ 已儲存</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LABOR REPORT MODAL -->
+<div id="report-modal">
+  <div class="report-wrapper">
+    <div class="report-toolbar">
+      <span id="report-modal-title">勞務報酬單</span>
+      <div class="report-toolbar-btns">
+        <button class="btn-print" onclick="submitReport()" id="btn-submit-report">✓ 送出申報</button>
+        <button class="btn-print" style="background:#5a7a5a;color:white;" onclick="saveDraft()">💾 儲存草稿</button>
+        <button class="btn-print" style="background:var(--mid);color:white;" onclick="doPrint()">🖨 列印</button>
+        <button class="btn-close-modal" onclick="closeModal()">✕ 關閉</button>
+      </div>
+    </div>
+    <div class="labor-doc">
+      <h1>塔團有限公司 勞務報酬單</h1>
+      <div class="sub-title" id="r-month-label"></div>
+      <div style="margin-bottom:1rem;font-size:13px;">所得內容：☑ 團購抽佣　□ 專案合作　□ 其他</div>
+      <table class="info-table">
+        <tr>
+          <td style="width:30%">所得人姓名：<input type="text" id="r-name" placeholder="請填寫"></td>
+          <td style="width:35%">身分證字號：<input type="text" id="r-id" placeholder="請填寫"></td>
+          <td>聯絡手機：<input type="text" id="r-phone" placeholder="請填寫"></td>
+        </tr>
+        <tr>
+          <td>戶籍地址：<input type="text" id="r-addr1" placeholder="請填寫"></td>
+          <td colspan="2">通訊地址（扣繳憑單寄送地址）：<input type="text" id="r-addr2" placeholder="如同戶籍則填同上"></td>
+        </tr>
+      </table>
+
+      <table class="detail-table">
+        <tr><td>專案名稱/內容：<input type="text" id="r-project" readonly style="font-weight:bold;color:#555;width:85%"></td></tr>
+        <tr><td>抽佣費用：NT$ <input type="text" id="r-fee" readonly style="font-weight:bold;color:#c0392b;width:90px;"> 元整</td></tr>
+        <tr>
+          <td>代扣繳稅率：<input type="text" id="r-tax-rate" value="0" style="width:30px;text-align:center"> %&nbsp;&nbsp;代扣繳金額：NT$ <input type="text" id="r-tax" value="0" style="width:70px;text-align:center"> 元整&nbsp;&nbsp;<span style="font-size:11px;">（執行業務所得≥2萬元需代扣10%）</span></td>
+        </tr>
+        <tr>
+          <td>二代健保：<input type="text" id="r-health-rate" value="0" style="width:30px;text-align:center"> %&nbsp;&nbsp;代扣繳金額：NT$ <input type="text" id="r-health" value="0" style="width:70px;text-align:center"> 元整&nbsp;&nbsp;<span style="font-size:11px;">（執行業務所得≥2萬元需代扣 2.11%）</span></td>
+        </tr>
+      </table>
+
+      <div style="font-weight:bold;font-size:13px;margin:0.6rem 0;" id="r-receipt-text"></div>
+
+      <!-- 簽名列 -->
+      <div style="display:flex;border:1px solid #333;margin:0.6rem 0;">
+        <div style="padding:0.7rem 1rem;background:#f5e6a3;flex:2;font-weight:bold;">領款人</div>
+        <div style="flex:3;position:relative;min-height:70px;">
+          <canvas id="sig-canvas" style="display:block;width:100%;height:70px;cursor:crosshair;touch-action:none;"></canvas>
+          <div id="sig-placeholder" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:11px;color:#aaa;pointer-events:none;white-space:nowrap;">← 請在此處手寫簽名</div>
+          <button onclick="clearSignature()" style="position:absolute;bottom:4px;right:6px;background:none;border:1px solid #ccc;font-size:10px;padding:1px 6px;cursor:pointer;color:#999;" class="no-print">清除</button>        </div>
+        <div style="padding:0.7rem 1rem;background:#e0e0e0;flex:2;font-size:12px;">領款日期：<input type="text" id="r-date" style="border:none;background:transparent;font-family:inherit;font-size:12px;width:90px;outline:none;"></div>
+      </div>
+      <div style="text-align:center;font-size:11px;color:#555;margin-bottom:0.5rem;">請附身分證影本（外籍人士請附居留證/護照影本）</div>
+
+      <!-- 身分證上傳 -->
+      <div class="id-card-row">
+        <div class="id-cell" style="border-right:none;flex-direction:column;gap:0.4rem;position:relative;cursor:pointer;" onclick="document.getElementById('id-front-input').click()">
+          <input type="file" id="id-front-input" accept="image/*" style="display:none" onchange="previewID(this,'id-front-preview')">
+          <img id="id-front-preview" src="" alt="" style="display:none;max-width:100%;max-height:95px;object-fit:contain;">
+          <div id="id-front-placeholder" style="display:flex;flex-direction:column;align-items:center;gap:0.3rem;color:#aaa;">
+            <div style="font-size:20px;">＋</div>
+            <div style="font-size:12px;">身分證正面影本</div>
+            <div style="font-size:10px;">點擊上傳</div>
+          </div>
+        </div>
+        <div class="id-cell" style="flex-direction:column;gap:0.4rem;position:relative;cursor:pointer;" onclick="document.getElementById('id-back-input').click()">
+          <input type="file" id="id-back-input" accept="image/*" style="display:none" onchange="previewID(this,'id-back-preview')">
+          <img id="id-back-preview" src="" alt="" style="display:none;max-width:100%;max-height:95px;object-fit:contain;">
+          <div id="id-back-placeholder" style="display:flex;flex-direction:column;align-items:center;gap:0.3rem;color:#aaa;">
+            <div style="font-size:20px;">＋</div>
+            <div style="font-size:12px;">身分證反面影本</div>
+            <div style="font-size:10px;">點擊上傳</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 匯款方式 -->
+      <div style="margin-top:0.6rem;border:1px solid #333;padding:0.6rem 1rem;">
+        <div style="font-weight:bold;margin-bottom:0.75rem;font-size:13px;">匯款資訊（銀行轉帳）：</div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <tr>
+            <td style="border:1px solid #999;padding:0.35rem 0.6rem;background:#f5f0e8;width:22%;white-space:nowrap;">銀行代碼</td>
+            <td style="border:1px solid #999;padding:0.35rem 0.6rem;"><input type="text" id="r-bank-code" placeholder="例：004" style="border:none;outline:none;font-family:inherit;font-size:12px;width:100%;"></td>
+            <td style="border:1px solid #999;padding:0.35rem 0.6rem;background:#f5f0e8;width:22%;white-space:nowrap;">銀行名稱</td>
+            <td style="border:1px solid #999;padding:0.35rem 0.6rem;"><input type="text" id="r-bank-name" placeholder="例：台灣銀行" style="border:none;outline:none;font-family:inherit;font-size:12px;width:100%;"></td>
+          </tr>
+          <tr>
+            <td style="border:1px solid #999;padding:0.35rem 0.6rem;background:#f5f0e8;">帳戶號碼</td>
+            <td colspan="3" style="border:1px solid #999;padding:0.35rem 0.6rem;"><input type="text" id="r-bank-account" placeholder="請填寫完整帳號" style="border:none;outline:none;font-family:inherit;font-size:12px;width:100%;"></td>
+          </tr>
+          <tr>
+            <td style="border:1px solid #999;padding:0.35rem 0.6rem;background:#f5f0e8;">戶名</td>
+            <td colspan="3" style="border:1px solid #999;padding:0.35rem 0.6rem;"><input type="text" id="r-bank-holder" placeholder="請填寫戶名" style="border:none;outline:none;font-family:inherit;font-size:12px;width:100%;"></td>
+          </tr>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const GSHEET_ID = '1gVhWlGXl1Il7olVAUxZhTmJ6UTaEQYU6IZRtimTMmGY';
+const GSHEET_NAME = 'Sheet1';
+// Apps Script 網址寫死在這裡，所有裝置都能送出
+const HARDCODED_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyiog2qo5pcZE48MtvL8yworbJRMzXXmnXlYDsoLRSWI873cK1Kvqo8blDgEFAI2Wg5aA/exec';
+
+const S = {
+  get: k => JSON.parse(localStorage.getItem('tataf_' + k) || 'null'),
+  set: (k, v) => localStorage.setItem('tataf_' + k, JSON.stringify(v)),
+};
+
+// 取 Apps Script URL：優先用後台設定的，否則用寫死的
+function getAppsScriptUrl() {
+  return S.get('apps_script_url') || HARDCODED_APPS_SCRIPT_URL;
+}
+
+const DEFAULT_PRODUCTS = [
+  { id: 'p1', name: '纖Q水', rate: 10 },
+  { id: 'p2', name: '瘦瘦巧克力', rate: 10 },
+  { id: 'p3', name: '白髮救星', rate: 15 },
+];
+
+const DEFAULT_AGENTS = [
+  { id: 'admin',  name: '施韋伶 (Tata)',    pw: 'tata2026',     isAdmin: true  },
+  { id: 'TF001',  name: '施韋馨（Doris）',   pw: 'doris2026',    isAdmin: false },
+  { id: 'TF002',  name: '周佳儀（佳佳）',    pw: 'chiachia2026', isAdmin: false },
+  { id: 'TF003',  name: '吳念純（小六）',    pw: '662026',       isAdmin: false },
+];
+
+function getProducts() { return S.get('products') || DEFAULT_PRODUCTS; }
+function getAgents() { return S.get('agents') || DEFAULT_AGENTS; }
+
+// Local records per user
+function getLocalRecords(uid) { return S.get('rec_' + uid) || []; }
+function saveLocalRecords(uid, recs) { S.set('rec_' + uid, recs); }
+
+// ============================================================
+// GOOGLE SHEETS API
+// ============================================================
+const SHEETS_BASE = `https://sheets.googleapis.com/v4/spreadsheets/${GSHEET_ID}`;
+
+async function sheetsRequest(path, method = 'GET', body = null) {
+  // Use Google Identity Services token if available
+  const token = S.get('gtoken');
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(`${SHEETS_BASE}${path}`, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : null,
+  });
+  if (!res.ok) throw new Error(`Sheets API ${res.status}`);
+  return res.json();
+}
+
+async function appendToSheet(record, paymentInfo) {
+  const APPS_SCRIPT_URL = S.get('apps_script_url') || '';
+  if (!APPS_SCRIPT_URL) throw new Error('尚未設定 Apps Script URL');
+
+  const now = new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' });
+  const bankInfo = `${paymentInfo.bankCode} ${paymentInfo.bankName} / ${paymentInfo.bankAccount} / ${paymentInfo.bankHolder}`;
+  const payload = {
+    申報時間: now,
+    小團主編號: record.agentId,
+    小團主姓名: record.agentName,
+    訂單編號: record.num,
+    產品名稱: record.productName,
+    訂單日期: record.date,
+    訂單金額: record.amount,
+    分潤比例: record.rate,
+    分潤金額: record.commission,
+    匯款方式: '銀行轉帳',
+    銀行帳號: bankInfo,
+    審核狀態: '待審核',
+    備註: record.note || '',
+    姓名: document.getElementById('r-name')?.value || '',
+    身分證: document.getElementById('r-id')?.value || '',
+    手機: document.getElementById('r-phone')?.value || '',
+  };
+
+  const res = await fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error('送出失敗');
+}
+
+async function fetchSheetRecords(agentId) {
+  const APPS_SCRIPT_URL = getAppsScriptUrl();
+  if (!APPS_SCRIPT_URL) return [];
+  const res = await fetch(`${APPS_SCRIPT_URL}?agentId=${encodeURIComponent(agentId)}`);
+  if (!res.ok) return [];
+  return await res.json();
+}
+
+function getPaymentInfo() {
+  return {
+    method: 'transfer',
+    bankCode: document.getElementById('r-bank-code')?.value || '',
+    bankName: document.getElementById('r-bank-name')?.value || '',
+    bankAccount: document.getElementById('r-bank-account')?.value || '',
+    bankHolder: document.getElementById('r-bank-holder')?.value || '',
+  };
+}
+
+// ============================================================
+// AUTH
+// ============================================================
+let currentUser = null;
+
+async function doLogin() {
+  const id = document.getElementById('login-id').value.trim();
+  const pw = document.getElementById('login-pw').value;
+  if (!id || !pw) { document.getElementById('login-error').textContent = '請輸入帳號和密碼'; return; }
+
+  // 直接用程式碼內的帳號驗證（最穩定）
+  const agents = getAgents();
+  const found = agents.find(a => a.id === id && a.pw === pw);
+
+  if (found) {
+    currentUser = found;
+    document.getElementById('login-error').textContent = '';
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display = 'block';
+    document.getElementById('user-display').textContent = `${found.name}（${found.id}）`;
+    if (found.isAdmin) {
+      document.getElementById('admin-tab').style.display = '';
+      document.getElementById('project-tab').style.display = '';
+    }
+    loadProductSelect();
+    updateSummaryFromLocal();
+    document.getElementById('order-date').value = new Date().toISOString().slice(0,10);
+  } else {
+    document.getElementById('login-error').textContent = '帳號或密碼錯誤，請再試一次。';
+  }
+}
+document.getElementById('login-id').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('login-pw').focus(); });
+document.getElementById('login-pw').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+// 檢查是否為專案合作填寫模式（等 DOM 完全載入後執行）
+document.addEventListener('DOMContentLoaded', () => {
+  checkProjectFormMode();
+});
+
+function doLogout() {
+  currentUser = null;
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-id').value = '';
+  document.getElementById('login-pw').value = '';
+  switchTab('input');
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(t) {
+  ['input','records','project','admin'].forEach(id => {
+    document.getElementById('tab-'+id).style.display = (id===t) ? '' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach((el,i) => {
+    el.classList.toggle('active', ['input','records','project','admin'][i] === t);
+  });
+  if (t === 'records') loadMyRecords();
+  if (t === 'admin') renderAdmin();
+  if (t === 'project') {
+    document.getElementById('proj-date').value = new Date().toISOString().slice(0,10);
+  }
+}
+
+// ============================================================
+// PRODUCT SELECT
+// ============================================================
+function loadProductSelect() {
+  const sel = document.getElementById('order-product');
+  sel.innerHTML = '<option value="">— 請選擇 —</option>';
+  getProducts().forEach(p => {
+    const o = document.createElement('option');
+    o.value = p.id;
+    o.textContent = `${p.name}（分潤 ${p.rate}%）`;
+    sel.appendChild(o);
+  });
+}
+
+function updatePreview() {
+  const pid = document.getElementById('order-product').value;
+  const amount = parseFloat(document.getElementById('order-amount').value) || 0;
+  const prev = document.getElementById('commission-preview');
+  if (!pid || amount <= 0) { prev.style.display = 'none'; return; }
+  const product = getProducts().find(p => p.id === pid);
+  if (!product) return;
+  const comm = Math.round(amount * product.rate / 100);
+  document.getElementById('preview-rate').textContent = `${product.name} × ${product.rate}%`;
+  document.getElementById('preview-amount').textContent = `NT$${comm.toLocaleString()}`;
+  prev.style.display = 'flex';
+}
+
+// ============================================================
+// SUBMIT ORDER
+// ============================================================
+function submitOrder() {
+  const pid = document.getElementById('order-product').value;
+  const date = document.getElementById('order-date').value;
+  const num = document.getElementById('order-num').value.trim();
+  const amount = parseFloat(document.getElementById('order-amount').value) || 0;
+  const note = document.getElementById('order-note').value.trim();
+
+  if (!pid) { alert('請選擇產品'); return; }
+  if (!date) { alert('請選擇訂單日期'); return; }
+  if (!num) { alert('請輸入訂單編號'); return; }
+  if (amount <= 0) { alert('請輸入正確的訂單金額'); return; }
+
+  const product = getProducts().find(p => p.id === pid);
+  const commission = Math.round(amount * product.rate / 100);
+  const record = {
+    id: Date.now().toString(),
+    num, date, productId: pid, productName: product.name,
+    rate: product.rate, amount, commission, note,
+    agentId: currentUser.id, agentName: currentUser.name,
+    status: '待審核',
+  };
+
+  const recs = getLocalRecords(currentUser.id);
+  recs.unshift(record);
+  saveLocalRecords(currentUser.id, recs);
+  updateSummaryFromLocal();
+  showToast('✓ 訂單已儲存');
+  clearForm();
+}
+
+// ============================================================
+// SUBMIT ORDER — 送出後立即同步到 Google Sheet
+// ============================================================
+async function submitOrder() {
+  const pid = document.getElementById('order-product').value;
+  const date = document.getElementById('order-date').value;
+  const num = document.getElementById('order-num').value.trim();
+  const amount = parseFloat(document.getElementById('order-amount').value) || 0;
+  const note = document.getElementById('order-note').value.trim();
+
+  if (!pid) { alert('請選擇產品'); return; }
+  if (!date) { alert('請選擇訂單日期'); return; }
+  if (!num) { alert('請輸入訂單編號'); return; }
+  if (amount <= 0) { alert('請輸入正確的訂單金額'); return; }
+
+  const product = getProducts().find(p => p.id === pid);
+  const commission = Math.round(amount * product.rate / 100);
+  const record = {
+    id: Date.now().toString(),
+    num, date, productId: pid, productName: product.name,
+    rate: product.rate, amount, commission, note,
+    agentId: currentUser.id, agentName: currentUser.name,
+    status: '待審核',
+  };
+
+  // 先存本機
+  const recs = getLocalRecords(currentUser.id);
+  recs.unshift(record);
+  saveLocalRecords(currentUser.id, recs);
+  updateSummaryFromLocal();
+
+  // 同步到 Google Sheet
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  btn.textContent = '送出中...';
+  const APPS_SCRIPT_URL = getAppsScriptUrl();
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        action: 'addOrder',
+        申報時間: new Date().toLocaleString('zh-TW'),
+        小團主編號: record.agentId,
+        小團主姓名: record.agentName,
+        訂單編號: record.num,
+        產品名稱: record.productName,
+        訂單日期: record.date,
+        訂單金額: record.amount,
+        分潤比例: record.rate,
+        分潤金額: record.commission,
+        備註: record.note || '',
+      }),
+    });
+    showToast('✓ 訂單已送出，等候塔塔審核');
+  } catch(e) {
+    showToast('⚠️ 已儲存本機，網路同步失敗');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '確認送出';
+  clearForm();
+}
+
+function clearForm() {
+  document.getElementById('order-product').value = '';
+  document.getElementById('order-num').value = '';
+  document.getElementById('order-amount').value = '';
+  document.getElementById('order-note').value = '';
+  document.getElementById('commission-preview').style.display = 'none';
+}
+
+// ============================================================
+// SUMMARY (from local)
+// ============================================================
+function updateSummaryFromLocal() {
+  const recs = getLocalRecords(currentUser.id);
+  const now = new Date();
+  const ym = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const thisMonth = recs.filter(r => r.date && r.date.startsWith(ym));
+  document.getElementById('sum-orders').textContent = thisMonth.length;
+  document.getElementById('sum-revenue').textContent = thisMonth.reduce((s,r)=>s+r.amount,0).toLocaleString();
+  document.getElementById('sum-commission').textContent = thisMonth.reduce((s,r)=>s+r.commission,0).toLocaleString();
+  document.getElementById('summary-cards').style.display = recs.length > 0 ? 'grid' : 'none';
+}
+
+// ============================================================
+// RECORDS — grouped by month, 審核通過才顯示生成勞報單
+// ============================================================
+async function loadMyRecords() {
+  const container = document.getElementById('records-container');
+  container.innerHTML = '<div class="empty-state">載入中...</div>';
+
+  let records = getLocalRecords(currentUser.id);
+
+  // 從 Sheet 同步審核狀態
+  showLoading('同步審核狀態...');
+  try {
+    const sheetRecs = await fetchSheetRecords(currentUser.id);
+    hideLoading();
+    if (sheetRecs.length > 0) {
+      records = records.map(r => {
+        const sr = sheetRecs.find(s => String(s['訂單編號']) === String(r.num));
+        if (sr) r.status = sr['審核狀態'] || r.status;
+        return r;
+      });
+      saveLocalRecords(currentUser.id, records);
+    }
+  } catch(e) { hideLoading(); }
+
+  if (!records.length) {
+    container.innerHTML = '<div class="empty-state">尚無分潤紀錄<br><small style="margin-top:0.5rem;display:block">到「輸入訂單」頁面新增訂單</small></div>';
+    return;
+  }
+
+  // Group by YYYY-MM
+  const groups = {};
+  records.forEach(r => {
+    const ym = r.date ? r.date.slice(0,7) : '未知';
+    if (!groups[ym]) groups[ym] = [];
+    groups[ym].push(r);
+  });
+
+  const sortedYMs = Object.keys(groups).sort((a,b) => b.localeCompare(a));
+  container.innerHTML = '';
+
+  sortedYMs.forEach((ym, idx) => {
+    const recs = groups[ym];
+    const totalComm = recs.reduce((s,r)=>s+r.commission,0);
+    const totalAmt = recs.reduce((s,r)=>s+r.amount,0);
+    const [y, m] = ym.split('-');
+    const label = `${y} 年 ${parseInt(m)} 月`;
+    const isOpen = idx === 0; // first month open by default
+
+    const div = document.createElement('div');
+    div.className = 'month-group';
+    div.innerHTML = `
+      <div class="month-header ${isOpen?'open':''}" onclick="toggleMonth(this)">
+        <div class="mh-left">
+          <div class="mh-title">${label}</div>
+          <div class="mh-stats">${recs.length} 筆訂單 · 總額 NT$${totalAmt.toLocaleString()}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:1rem">
+          <div class="mh-total">分潤 NT$${totalComm.toLocaleString()}</div>
+          <div class="mh-chevron">▼</div>
+        </div>
+      </div>
+      <div class="month-body ${isOpen?'open':''}">
+        <div class="month-actions">
+          <div class="ma-info">共 ${recs.length} 筆 · 總分潤 <strong>NT$${totalComm.toLocaleString()}</strong></div>
+          ${(() => {
+            const hasPaid = recs.some(r => r.status === '已請款');
+            const anyPending = recs.some(r => r.status === '待審核');
+            const allApprovedOrAbove = recs.every(r => ['已核准','已放款','已請款'].includes(r.status));
+            if (hasPaid) {
+              return `<div style="font-size:0.8rem;color:#1a5276;display:flex;align-items:center;gap:0.5rem;">
+                <span style="background:#eaf3fb;border:1px solid #a9cce3;color:#1a5276;padding:0.2rem 0.7rem;font-size:0.75rem;font-weight:500;">✓ 已請款完成</span>
+                <span>此月份款項已結清，無法重複申報</span>
+              </div>`;
+            } else if (anyPending) {
+              return `<div style="font-size:0.8rem;color:var(--light);display:flex;align-items:center;gap:0.5rem;">
+                <span style="background:#fef9e7;border:1px solid #f9e79f;color:#b7950b;padding:0.2rem 0.6rem;font-size:0.75rem;">等候塔塔審核中</span>
+                <span>審核通過後可生成勞報單</span>
+              </div>`;
+            } else if (allApprovedOrAbove) {
+              return `<button class="btn-gen-report" onclick="generateMonthlyReport('${ym}')">📄 生成 ${label} 勞報單</button>`;
+            } else {
+              return `<div style="font-size:0.8rem;color:var(--light);display:flex;align-items:center;gap:0.5rem;">
+                <span style="background:#fef9e7;border:1px solid #f9e79f;color:#b7950b;padding:0.2rem 0.6rem;font-size:0.75rem;">等候塔塔審核中</span>
+                <span>審核通過後可生成勞報單</span>
+              </div>`;
+            }
+          })()}
+        </div>
+        <table class="records-table">
+          <thead><tr><th>日期</th><th>訂單編號</th><th>產品</th><th>訂單金額</th><th>分潤%</th><th>分潤金額</th><th>審核狀態</th><th></th></tr></thead>
+          <tbody>
+            ${recs.map(r=>`
+              <tr>
+                <td>${r.date||''}</td>
+                <td>${r.num||''}</td>
+                <td>${r.productName||''}</td>
+                <td>NT$${(r.amount||0).toLocaleString()}</td>
+                <td>${r.rate||0}%</td>
+                <td style="color:var(--green);font-weight:500">NT$${(r.commission||0).toLocaleString()}</td>
+                <td><span class="status-badge status-${r.status||'待審核'}">${r.status||'待審核'}</span></td>
+                <td>${r.status === '已請款' ? '' : `<button class="btn-delete-rec" onclick="deleteRecord('${r.id}')">刪除</button>`}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function toggleMonth(header) {
+  header.classList.toggle('open');
+  header.nextElementSibling.classList.toggle('open');
+}
+
+function deleteRecord(id) {
+  if (!confirm('確定要刪除這筆訂單？')) return;
+  const recs = getLocalRecords(currentUser.id).filter(r => r.id !== id);
+  saveLocalRecords(currentUser.id, recs);
+  updateSummaryFromLocal();
+  loadMyRecords();
+}
+
+// ============================================================
+// MONTHLY LABOUR REPORT
+// ============================================================
+function generateMonthlyReport(ym) {
+  const allRecords = getLocalRecords(currentUser.id).filter(r => r.date && r.date.startsWith(ym));
+  if (!allRecords.length) { alert('此月份無資料'); return; }
+
+  // 只計入「已核准」的訂單，排除已請款（已結清）
+  const records = allRecords.filter(r => r.status === '已核准' || r.status === '已放款');
+  if (!records.length) {
+    alert('此月份沒有待請款的已核准訂單。\n\n（已請款的訂單不計入勞報單）');
+    return;
+  }
+  _currentReportRecords = records;
+
+  const [y, m] = ym.split('-');
+  const rocYear = parseInt(y) - 1911;
+  const monthLabel = `${rocYear} 年 ${parseInt(m)} 月`;
+  const totalComm = records.reduce((s,r)=>s+r.commission,0);
+  const paidCount = allRecords.filter(r => r.status === '已請款').length;
+
+  // ⚠️ 超過 20,000 提醒
+  if (totalComm >= 20000) {
+    const sorted = [...records].sort((a,b) => a.commission - b.commission);
+    const smallest = sorted[0];
+    const remaining = totalComm - smallest.commission;
+    const msg = `⚠️ 本月待請款分潤合計 NT$${totalComm.toLocaleString()}，已超過 NT$20,000。\n\n超過門檻將被代扣：\n・所得稅 10%：NT$${Math.round(totalComm*0.1).toLocaleString()}\n・二代健保 2.11%：NT$${Math.round(totalComm*0.0211).toLocaleString()}\n\n建議將「${smallest.productName}（${smallest.date}，分潤 NT$${smallest.commission.toLocaleString()}）」挪到下月申報，剩餘 NT$${remaining.toLocaleString()} 即可免扣。\n\n是否仍要繼續生成本月勞報單？`;
+    if (!confirm(msg)) return;
+  }
+
+  // Modal title & subtitle
+  document.getElementById('report-modal-title').textContent = `${monthLabel} 勞務報酬單`;
+  const paidNote = paidCount > 0 ? `（另有 ${paidCount} 筆已請款不計入）` : '';
+  document.getElementById('r-month-label').textContent = `${y} 年 ${parseInt(m)} 月　共 ${records.length} 筆待請款訂單 ${paidNote}`;
+
+  // Project text
+  document.getElementById('r-project').value = `團購抽佣 — ${y}年${parseInt(m)}月分潤`;
+
+  // Fee & tax
+  document.getElementById('r-fee').value = totalComm.toLocaleString();
+  let taxRate=0, tax=0, healthRate=0, health=0;
+  if (totalComm >= 20000) {
+    taxRate=10; tax=Math.round(totalComm*0.1);
+    healthRate=2.11; health=Math.round(totalComm*0.0211);
+  }
+  document.getElementById('r-tax-rate').value = taxRate;
+  document.getElementById('r-tax').value = tax.toLocaleString();
+  document.getElementById('r-health-rate').value = healthRate;
+  document.getElementById('r-health').value = health.toLocaleString();
+
+  // Chinese amount
+  const cn = toChinese(totalComm);
+  document.getElementById('r-receipt-text').textContent =
+    `茲收到塔團有限公司支付本人之報酬，共計新台幣 ${[...cn].join(' ')} 元 整`;
+
+  // Date (last day of month)
+  document.getElementById('r-date').value = `${rocYear}年${parseInt(m)}月`;
+
+  // Clear personal fields
+  ['r-name','r-id','r-phone','r-addr1','r-addr2'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+
+  document.getElementById('report-modal').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  // Reset ID uploads
+  ['id-front-input','id-back-input'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  ['id-front-preview','id-back-preview'].forEach(id => { const el=document.getElementById(id); if(el){el.style.display='none';el.src='';} });
+  ['id-front-placeholder','id-back-placeholder'].forEach(id => { const el=document.getElementById(id); if(el) el.style.display='flex'; });
+  // Init signature pad after modal renders, then load draft
+  setTimeout(() => {
+    initSignaturePad();
+    loadDraft();
+  }, 120);
+}
+
+// ============================================================
+// 草稿：儲存 & 載入
+// ============================================================
+function saveDraft() {
+  try {
+    const uid = currentUser?.id || 'guest';
+
+    // 取簽名 canvas data（壓縮品質降低以節省空間）
+    let sigData = '';
+    try {
+      const canvas = document.getElementById('sig-canvas');
+      if (canvas) sigData = canvas.toDataURL('image/png', 0.5);
+    } catch(e) {}
+
+    // 只存文字欄位 + 簽名，不存身分證圖片（圖片太大會超過儲存上限）
+    const draft = {
+      name:        document.getElementById('r-name')?.value || '',
+      id:          document.getElementById('r-id')?.value || '',
+      phone:       document.getElementById('r-phone')?.value || '',
+      addr1:       document.getElementById('r-addr1')?.value || '',
+      addr2:       document.getElementById('r-addr2')?.value || '',
+      bankCode:    document.getElementById('r-bank-code')?.value || '',
+      bankName:    document.getElementById('r-bank-name')?.value || '',
+      bankAccount: document.getElementById('r-bank-account')?.value || '',
+      bankHolder:  document.getElementById('r-bank-holder')?.value || '',
+      signature:   sigData,
+    };
+
+    localStorage.setItem('tataf_draft_' + uid, JSON.stringify(draft));
+    showToast('💾 草稿已儲存（姓名、帳戶、簽名）');
+  } catch(e) {
+    showToast('⚠️ 草稿儲存失敗，請重試');
+  }
+}
+
+function loadDraft() {
+  try {
+    const uid = currentUser?.id || 'guest';
+    const raw = localStorage.getItem('tataf_draft_' + uid);
+    if (!raw) return;
+    const draft = JSON.parse(raw);
+
+    // 文字欄位
+    const map = {
+      'r-name': draft.name, 'r-id': draft.id, 'r-phone': draft.phone,
+      'r-addr1': draft.addr1, 'r-addr2': draft.addr2,
+      'r-bank-code': draft.bankCode, 'r-bank-name': draft.bankName,
+      'r-bank-account': draft.bankAccount, 'r-bank-holder': draft.bankHolder,
+    };
+    Object.entries(map).forEach(([id, val]) => {
+      const el = document.getElementById(id);
+      if (el && val) el.value = val;
+    });
+
+    // 簽名
+    if (draft.signature && draft.signature.startsWith('data:') && sigCtx) {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.getElementById('sig-canvas');
+        sigCtx.clearRect(0, 0, canvas.width, canvas.height);
+        sigCtx.drawImage(img, 0, 0, canvas.width / window.devicePixelRatio, canvas.height / window.devicePixelRatio);
+        hideSigPlaceholder();
+      };
+      img.src = draft.signature;
+    }
+  } catch(e) {
+    console.log('草稿載入失敗', e);
+  }
+}
+
+// ============================================================
+// 列印（設定檔名、隱藏頁首頁尾）
+// ============================================================
+function doPrint() {
+  // 設定 document.title 控制 PDF 檔名
+  const modalTitle = document.getElementById('report-modal-title')?.textContent || '';
+  // 取月份數字，例 "115 年 5 月 勞務報酬單" → "TATA FLOW 分潤_115年5月"
+  const match = modalTitle.match(/(\d+)\s*年\s*(\d+)\s*月/);
+  const origTitle = document.title;
+  if (match) {
+    document.title = `TATA FLOW 分潤_${match[1]}年${match[2]}月`;
+  }
+  window.print();
+  // 恢復原本 title
+  setTimeout(() => { document.title = origTitle; }, 1000);
+}
+
+
+let _currentReportRecords = []; // set by generateMonthlyReport
+
+async function submitReport() {
+  const name = document.getElementById('r-name').value.trim();
+  if (!name) { alert('請先填寫姓名再送出'); return; }
+  const payment = getPaymentInfo();
+  if (!payment.bankAccount) { alert('請填寫銀行帳號'); return; }
+
+  const APPS_SCRIPT_URL = getAppsScriptUrl();
+  if (!APPS_SCRIPT_URL) { alert('尚未設定 Apps Script 網址，請通知管理員'); return; }
+
+  const btn = document.getElementById('btn-submit-report');
+  btn.disabled = true;
+  btn.textContent = '送出中...';
+  showLoading('申報資料上傳中...');
+
+  try {
+    // 取得月份總分潤
+    const totalComm = _currentReportRecords.reduce((s,r)=>s+r.commission,0);
+    const [y, m] = (_currentReportRecords[0]?.date || '').slice(0,7).split('-');
+    const rocYear = parseInt(y) - 1911;
+    const monthLabel = `${rocYear}年${parseInt(m)}月`;
+
+    // 取身分證圖片 base64
+    const frontImg = document.getElementById('id-front-preview');
+    const backImg = document.getElementById('id-back-preview');
+
+    // ── 生成勞報單 PDF ──────────────────────────────────────
+    showLoading('生成 PDF 中...');
+    let pdfBase64 = '';
+    try {
+      const { jsPDF } = window.jspdf;
+      const laborDoc = document.querySelector('.labor-doc');
+      const toolbar = document.querySelector('.report-toolbar');
+      const noPrintEls = document.querySelectorAll('.no-print');
+      toolbar.style.display = 'none';
+      noPrintEls.forEach(el => el.style.display = 'none');
+
+      const canvas = await html2canvas(laborDoc, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        imageTimeout: 15000,
+        width: 700,
+        windowWidth: 750,
+        onclone: (clonedDoc) => {
+          const doc = clonedDoc.querySelector('.labor-doc');
+          if (doc) {
+            doc.style.fontFamily = "'Noto Sans TC', Arial, sans-serif";
+            doc.style.fontSize = '13px';
+            doc.style.lineHeight = '1.6';
+            doc.style.padding = '20px 28px';
+          }
+          // 讓所有 td 高度自動，不被截字
+          clonedDoc.querySelectorAll('td, th').forEach(td => {
+            td.style.height = 'auto';
+            td.style.minHeight = '28px';
+            td.style.padding = '5px 8px';
+            td.style.verticalAlign = 'middle';
+            td.style.overflow = 'visible';
+            td.style.whiteSpace = 'normal';
+          });
+          // 輸入框文字完整顯示
+          clonedDoc.querySelectorAll('input[type="text"], input:not([type])').forEach(inp => {
+            const span = clonedDoc.createElement('span');
+            span.textContent = inp.value;
+            span.style.cssText = 'display:inline;font-family:inherit;font-size:inherit;color:#000;';
+            inp.parentNode.replaceChild(span, inp);
+          });
+          // 身分證格子放大
+          clonedDoc.querySelectorAll('.id-cell').forEach(cell => {
+            cell.style.height = 'auto';
+            cell.style.minHeight = '160px';
+            cell.style.padding = '8px';
+          });
+          clonedDoc.querySelectorAll('.id-cell img').forEach(img => {
+            img.style.maxWidth = '100%';
+            img.style.maxHeight = '148px';
+            img.style.width = 'auto';
+            img.style.height = 'auto';
+            img.style.display = 'block';
+          });
+        }
+      });
+
+      toolbar.style.display = '';
+      noPrintEls.forEach(el => el.style.display = '');
+
+      // 用 JPEG 0.85 壓縮，清晰度夠又不會超大
+      const imgData = canvas.toDataURL('image/jpeg', 0.85);
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const margin = 12;
+      const imgW = pageW - margin * 2;
+      const imgH = (canvas.height * imgW) / canvas.width;
+
+      if (imgH <= pageH - margin * 2) {
+        pdf.addImage(imgData, 'JPEG', margin, margin, imgW, imgH);
+      } else {
+        let srcYpx = 0;
+        const pageHpx = ((pageH - margin * 2) / imgW) * canvas.width;
+        while (srcYpx < canvas.height) {
+          const sliceHpx = Math.min(pageHpx, canvas.height - srcYpx);
+          const sliceCanvas = document.createElement('canvas');
+          sliceCanvas.width = canvas.width;
+          sliceCanvas.height = sliceHpx;
+          sliceCanvas.getContext('2d').drawImage(canvas, 0, srcYpx, canvas.width, sliceHpx, 0, 0, canvas.width, sliceHpx);
+          pdf.addImage(sliceCanvas.toDataURL('image/jpeg', 0.85), 'JPEG', margin, margin, imgW, (sliceHpx / canvas.width) * imgW);
+          srcYpx += sliceHpx;
+          if (srcYpx < canvas.height) pdf.addPage();
+        }
+      }
+
+      pdfBase64 = pdf.output('datauristring').split(',')[1];
+    } catch(pdfErr) {
+      console.warn('PDF 生成失敗', pdfErr);
+    }
+
+    // ── 壓縮身分證圖片 ──────────────────────────────────────
+    function compressImage(src, maxW, quality) {
+      return new Promise(resolve => {
+        if (!src || !src.startsWith('data:')) { resolve(''); return; }
+        const img = new Image();
+        img.onload = () => {
+          const scale = Math.min(1, maxW / img.width);
+          const c = document.createElement('canvas');
+          c.width = img.width * scale;
+          c.height = img.height * scale;
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          resolve(c.toDataURL('image/jpeg', quality).split(',')[1]);
+        };
+        img.onerror = () => resolve('');
+        img.src = src;
+      });
+    }
+
+    showLoading('壓縮圖片中...');
+    const frontSrc = frontImg?.src?.startsWith('data:') ? frontImg.src : '';
+    const backSrc  = backImg?.src?.startsWith('data:')  ? backImg.src  : '';
+    const [frontB64, backB64] = await Promise.all([
+      compressImage(frontSrc, 800, 0.75),
+      compressImage(backSrc,  800, 0.75),
+    ]);
+
+    showLoading('申報資料上傳中...');
+
+    const payload = {
+      action: 'submitReport',
+      勞報單月份: monthLabel,
+      小團主編號: currentUser.id,
+      小團主姓名: currentUser.name,
+      姓名: name,
+      身分證: document.getElementById('r-id')?.value || '',
+      手機: document.getElementById('r-phone')?.value || '',
+      戶籍地址: document.getElementById('r-addr1')?.value || '',
+      通訊地址: document.getElementById('r-addr2')?.value || '',
+      分潤金額: totalComm,
+      銀行代碼: payment.bankCode,
+      銀行名稱: payment.bankName,
+      銀行帳號: payment.bankAccount,
+      戶名: payment.bankHolder,
+      身分證正面: frontB64 ? `data:image/jpeg;base64,${frontB64}` : '',
+      身分證反面: backB64  ? `data:image/jpeg;base64,${backB64}`  : '',
+      pdfBase64: pdfBase64,
+    };
+
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload),
+    });
+    const result = await res.json();
+    hideLoading();
+
+    if (result.success) {
+      btn.textContent = '✓ 已送出';
+      showToast('✓ 勞報單已送出，塔塔將收到 Email 通知');
+      const recs = getLocalRecords(currentUser.id).map(r => {
+        if (_currentReportRecords.find(cr => cr.id === r.id)) r.submitted = true;
+        return r;
+      });
+      saveLocalRecords(currentUser.id, recs);
+    } else {
+      throw new Error(result.error || '送出失敗');
+    }
+  } catch(e) {
+    hideLoading();
+    btn.disabled = false;
+    btn.textContent = '✓ 送出申報';
+    alert(`送出失敗：${e.message}\n\n你仍可列印勞報單手動回傳。`);
+  }
+}
+
+function closeModal() {
+  document.getElementById('report-modal').style.display = 'none';
+  document.body.style.overflow = '';
+  const btn = document.getElementById('btn-submit-report');
+  if (btn) { btn.disabled = false; btn.textContent = '✓ 送出申報'; }
+}
+
+// ============================================================
+// CHINESE NUMBER
+// ============================================================
+const CN = ['零','壹','貳','參','肆','伍','陸','柒','捌','玖'];
+const CU = ['','拾','佰','仟','萬','拾萬','佰萬','仟萬','億'];
+function toChinese(n) {
+  if (!n) return '零';
+  let r='', s=String(n);
+  for (let i=0;i<s.length;i++) {
+    const d=parseInt(s[i]), u=CU[s.length-1-i];
+    if(d!==0) r+=CN[d]+u;
+    else if(r&&!r.endsWith('零')) r+='零';
+  }
+  return r.replace(/零+$/,'');
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = 'position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--dark);color:white;padding:0.6rem 1.5rem;font-size:0.85rem;z-index:300;letter-spacing:0.05em;opacity:0;transition:opacity 0.3s;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  setTimeout(() => t.style.opacity = '0', 2500);
+}
+
+
+// ============================================================
+// SIGNATURE PAD
+// ============================================================
+let sigDrawing = false;
+let sigCtx = null;
+
+function initSignaturePad() {
+  const canvas = document.getElementById('sig-canvas');
+  if (!canvas) return;
+  // Set actual pixel size
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * window.devicePixelRatio;
+  canvas.height = 70 * window.devicePixelRatio;
+  sigCtx = canvas.getContext('2d');
+  sigCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  sigCtx.strokeStyle = '#1a1a1a';
+  sigCtx.lineWidth = 1.8;
+  sigCtx.lineCap = 'round';
+  sigCtx.lineJoin = 'round';
+
+  function getPos(e) {
+    const r = canvas.getBoundingClientRect();
+    const src = e.touches ? e.touches[0] : e;
+    return { x: src.clientX - r.left, y: src.clientY - r.top };
+  }
+
+  canvas.addEventListener('mousedown', e => { sigDrawing=true; const p=getPos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); hideSigPlaceholder(); });
+  canvas.addEventListener('mousemove', e => { if(!sigDrawing)return; const p=getPos(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); });
+  canvas.addEventListener('mouseup', ()=>sigDrawing=false);
+  canvas.addEventListener('mouseleave', ()=>sigDrawing=false);
+
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); sigDrawing=true; const p=getPos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); hideSigPlaceholder(); }, {passive:false});
+  canvas.addEventListener('touchmove', e => { e.preventDefault(); if(!sigDrawing)return; const p=getPos(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); }, {passive:false});
+  canvas.addEventListener('touchend', ()=>sigDrawing=false);
+}
+
+function hideSigPlaceholder() {
+  const ph = document.getElementById('sig-placeholder');
+  if (ph) ph.style.display = 'none';
+}
+
+function clearSignature() {
+  const canvas = document.getElementById('sig-canvas');
+  if (!sigCtx) return;
+  sigCtx.clearRect(0, 0, canvas.width, canvas.height);
+  const ph = document.getElementById('sig-placeholder');
+  if (ph) ph.style.display = '';
+}
+
+// ============================================================
+// ID CARD UPLOAD WITH WATERMARK
+// ============================================================
+function previewID(input, previewId) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      // Draw onto canvas with watermark
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+
+      // Draw original image
+      ctx.drawImage(img, 0, 0);
+
+      // Single subtle diagonal watermark
+      const text = '僅限塔團有限公司請款使用';
+      const fontSize = Math.max(16, Math.round(img.width / 22));
+      ctx.save();
+      ctx.translate(img.width / 2, img.height / 2);
+      ctx.rotate(-Math.PI / 10);
+      ctx.font = `bold ${fontSize}px "Noto Sans TC", sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.globalAlpha = 0.22;
+      ctx.fillStyle = '#cc3300';
+      ctx.fillText(text, 0, 0);
+      ctx.restore();
+
+      // Show watermarked image
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+      const previewEl = document.getElementById(previewId);
+      previewEl.src = dataUrl;
+      previewEl.style.display = 'block';
+
+      // Hide placeholder
+      const phId = previewId.replace('preview','placeholder');
+      const ph = document.getElementById(phId);
+      if (ph) ph.style.display = 'none';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+
+function showLoading(msg) { document.getElementById('loading-text').textContent=msg||'處理中...'; document.getElementById('loading').classList.add('show'); }
+function hideLoading() { document.getElementById('loading').classList.remove('show'); }
+
+// ============================================================
+// 專案合作連結
+// ============================================================
+let _projLinkData = null;
+
+function updateProjPreview() {
+  const amount = parseFloat(document.getElementById('proj-amount').value) || 0;
+  const prev = document.getElementById('proj-preview');
+  if (amount <= 0) { prev.style.display = 'none'; return; }
+  document.getElementById('proj-preview-amount').textContent = `NT$${amount.toLocaleString()}`;
+  prev.style.display = 'flex';
+}
+
+function generateProjectLink() {
+  const name   = document.getElementById('proj-name').value.trim();
+  const amount = parseFloat(document.getElementById('proj-amount').value) || 0;
+  const title  = document.getElementById('proj-title').value.trim();
+  const date   = document.getElementById('proj-date').value;
+  const note   = document.getElementById('proj-note').value.trim();
+
+  if (!name)   { alert('請填寫合作對象姓名'); return; }
+  if (!title)  { alert('請填寫專案名稱'); return; }
+  if (amount <= 0) { alert('請填寫合作金額'); return; }
+  if (!date)   { alert('請選擇合作日期'); return; }
+
+  const data = { name, amount, title, date, note };
+  _projLinkData = data;
+
+  // 用 URL-safe base64 編碼
+  const jsonStr = JSON.stringify(data);
+  const encoded = btoa(unescape(encodeURIComponent(jsonStr)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  const base = window.location.href.split('#')[0].split('?')[0];
+  const url = `${base}#proj=${encoded}`;
+
+  document.getElementById('proj-link-text').textContent = url;
+  document.getElementById('proj-link-card').style.display = '';
+}
+
+function copyProjLink() {
+  const text = document.getElementById('proj-link-text').textContent;
+  navigator.clipboard.writeText(text).then(() => showToast('✓ 連結已複製'));
+}
+
+function openProjLink() {
+  const text = document.getElementById('proj-link-text').textContent;
+  window.open(text, '_blank');
+}
+
+function clearProjForm() {
+  ['proj-name','proj-amount','proj-title','proj-note'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('proj-preview').style.display = 'none';
+  document.getElementById('proj-link-card').style.display = 'none';
+}
+
+// ── 對方打開連結時，顯示填寫頁面 ──────────────────────────
+function checkProjectFormMode() {
+  const hash = window.location.hash;
+  if (!hash.startsWith('#proj=')) return false;
+
+  try {
+    const encoded = hash.slice(6);
+    // 還原 URL-safe base64
+    const b64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = b64 + '=='.slice(0, (4 - b64.length % 4) % 4);
+    const data = JSON.parse(decodeURIComponent(escape(atob(padded))));
+    showProjectForm(data);
+    return true;
+  } catch(e) {
+    console.error('連結解析失敗', e);
+    return false;
+  }
+}
+
+function showProjectForm(data) {
+  // 隱藏整個登入/app，顯示獨立填寫頁面
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'none';
+
+  const d = new Date(data.date);
+  const rocYear = d.getFullYear() - 1911;
+  const monthLabel = `${rocYear}年${d.getMonth()+1}月`;
+  const cn = toChinese(data.amount);
+
+  const page = document.createElement('div');
+  page.id = 'proj-form-page';
+  page.style.cssText = 'min-height:100vh;background:#faf8f5;';
+  page.innerHTML = `
+    <div style="background:#2a2118;padding:0.9rem 1.5rem;display:flex;align-items:center;justify-content:space-between;">
+      <span style="color:white;font-family:'Noto Serif TC',serif;font-size:1rem;letter-spacing:0.1em;">TATA FLOW</span>
+      <span style="color:#e8d5b0;font-size:0.8rem;">專案合作勞務報酬單</span>
+    </div>
+    <div style="max-width:700px;margin:0 auto;padding:1.5rem;">
+      <div style="background:white;border:1px solid #ddd5c5;padding:0.75rem 1rem;margin-bottom:1rem;font-size:0.82rem;color:#5a4a3a;line-height:1.6;">
+        📋 塔塔已為你建立這份勞務報酬單，請填寫個人資料、手寫簽名並上傳身分證正反面後送出。
+      </div>
+
+      <!-- 勞報單本體 -->
+      <div id="proj-labor-doc" style="background:white;border:1px solid #ddd5c5;padding:1.5rem 2rem;font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.6;color:#000;">
+        <h2 style="text-align:center;font-size:20px;font-weight:bold;margin-bottom:0.3rem;letter-spacing:0.1em;">塔團有限公司 勞務報酬單</h2>
+        <div style="text-align:center;font-size:13px;margin-bottom:1rem;color:#555;">${data.date} 專案合作</div>
+        <div style="margin-bottom:0.75rem;font-size:13px;">所得內容：□ 團購抽佣　☑ 專案合作　□ 其他</div>
+
+        <table style="width:100%;border-collapse:collapse;margin-bottom:0.6rem;">
+          <tr>
+            <td style="border:1px solid #333;padding:0.35rem 0.6rem;width:28%;">所得人姓名：<br><input type="text" id="pf-name" value="${data.name}" style="border:none;outline:none;font-family:inherit;font-size:13px;width:100%;background:transparent;"></td>
+            <td style="border:1px solid #333;padding:0.35rem 0.6rem;width:36%;">身分證字號：<br><input type="text" id="pf-id" placeholder="請填寫" style="border:none;outline:none;font-family:inherit;font-size:13px;width:100%;background:transparent;"></td>
+            <td style="border:1px solid #333;padding:0.35rem 0.6rem;">聯絡手機：<br><input type="text" id="pf-phone" placeholder="請填寫" style="border:none;outline:none;font-family:inherit;font-size:13px;width:100%;background:transparent;"></td>
+          </tr>
+          <tr>
+            <td style="border:1px solid #333;padding:0.35rem 0.6rem;">戶籍地址：<br><input type="text" id="pf-addr1" placeholder="請填寫" style="border:none;outline:none;font-family:inherit;font-size:13px;width:100%;background:transparent;"></td>
+            <td colspan="2" style="border:1px solid #333;padding:0.35rem 0.6rem;">通訊地址（扣繳憑單寄送地址）：<br><input type="text" id="pf-addr2" placeholder="如同戶籍則填同上" style="border:none;outline:none;font-family:inherit;font-size:13px;width:100%;background:transparent;"></td>
+          </tr>
+        </table>
+
+        <table style="width:100%;border-collapse:collapse;margin-bottom:0.6rem;">
+          <tr><td style="border:1px solid #333;padding:0.35rem 0.7rem;">專案名稱/內容：${data.title}${data.note ? '（'+data.note+'）' : ''}</td></tr>
+          <tr><td style="border:1px solid #333;padding:0.35rem 0.7rem;">合作費用：NT$ <strong style="color:#c0392b;">${data.amount.toLocaleString()}</strong> 元整</td></tr>
+          <tr><td style="border:1px solid #333;padding:0.35rem 0.7rem;">代扣繳稅率：${data.amount>=20000?'10':'0'} %　代扣繳金額：NT$ ${data.amount>=20000?Math.round(data.amount*0.1).toLocaleString():'0'} 元整　<span style="font-size:11px;">（執行業務所得≥2萬元需代扣10%）</span></td></tr>
+          <tr><td style="border:1px solid #333;padding:0.35rem 0.7rem;">二代健保：${data.amount>=20000?'2.11':'0'} %　代扣繳金額：NT$ ${data.amount>=20000?Math.round(data.amount*0.0211).toLocaleString():'0'} 元整　<span style="font-size:11px;">（執行業務所得≥2萬元需代扣2.11%）</span></td></tr>
+        </table>
+
+        <div style="font-weight:bold;font-size:13px;margin:0.6rem 0;">茲收到塔團有限公司支付本人之報酬，共計新台幣 ${[...cn].join(' ')} 元 整</div>
+
+        <!-- 簽名 -->
+        <div style="display:flex;border:1px solid #333;margin:0.6rem 0;">
+          <div style="padding:0.7rem 1rem;background:#f5e6a3;flex:2;font-weight:bold;">領款人</div>
+          <div style="flex:3;position:relative;min-height:70px;">
+            <canvas id="pf-sig-canvas" style="display:block;width:100%;height:70px;cursor:crosshair;touch-action:none;"></canvas>
+            <div id="pf-sig-placeholder" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:11px;color:#aaa;pointer-events:none;white-space:nowrap;">← 請在此處手寫簽名</div>
+            <button onclick="clearProjSig()" style="position:absolute;bottom:4px;right:6px;background:none;border:1px solid #ccc;font-size:10px;padding:1px 6px;cursor:pointer;color:#999;">清除</button>
+          </div>
+          <div style="padding:0.7rem 1rem;background:#e0e0e0;flex:2;font-size:12px;">領款日期：${monthLabel}</div>
+        </div>
+        <div style="text-align:center;font-size:11px;color:#555;margin-bottom:0.5rem;">請附身分證影本（外籍人士請附居留證/護照影本）</div>
+
+        <!-- 身分證 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;">
+          <div class="id-cell" style="border:1px solid #333;border-right:none;padding:0.5rem;min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:0.4rem;" onclick="document.getElementById('pf-id-front').click()">
+            <input type="file" id="pf-id-front" accept="image/*" style="display:none" onchange="pfPreviewID(this,'pf-front-img','pf-front-ph')">
+            <img id="pf-front-img" src="" style="display:none;max-width:100%;max-height:130px;object-fit:contain;">
+            <div id="pf-front-ph" style="display:flex;flex-direction:column;align-items:center;color:#aaa;gap:0.3rem;font-size:12px;">
+              <div style="font-size:20px;">＋</div><div>身分證正面影本</div><div style="font-size:10px;">點擊上傳</div>
+            </div>
+          </div>
+          <div class="id-cell" style="border:1px solid #333;padding:0.5rem;min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:0.4rem;" onclick="document.getElementById('pf-id-back').click()">
+            <input type="file" id="pf-id-back" accept="image/*" style="display:none" onchange="pfPreviewID(this,'pf-back-img','pf-back-ph')">
+            <img id="pf-back-img" src="" style="display:none;max-width:100%;max-height:130px;object-fit:contain;">
+            <div id="pf-back-ph" style="display:flex;flex-direction:column;align-items:center;color:#aaa;gap:0.3rem;font-size:12px;">
+              <div style="font-size:20px;">＋</div><div>身分證反面影本</div><div style="font-size:10px;">點擊上傳</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 銀行帳號 -->
+        <div style="margin-top:0.6rem;border:1px solid #333;padding:0.6rem 1rem;">
+          <div style="font-weight:bold;margin-bottom:0.6rem;font-size:13px;">匯款資訊（銀行轉帳）：</div>
+          <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <tr>
+              <td style="border:1px solid #999;padding:0.3rem 0.6rem;background:#f5f0e8;width:22%;white-space:nowrap;">銀行代碼</td>
+              <td style="border:1px solid #999;padding:0.3rem 0.6rem;"><input type="text" id="pf-bank-code" placeholder="例：004" style="border:none;outline:none;font-family:inherit;font-size:12px;width:100%;"></td>
+              <td style="border:1px solid #999;padding:0.3rem 0.6rem;background:#f5f0e8;width:22%;white-space:nowrap;">銀行名稱</td>
+              <td style="border:1px solid #999;padding:0.3rem 0.6rem;"><input type="text" id="pf-bank-name" placeholder="例：台灣銀行" style="border:none;outline:none;font-family:inherit;font-size:12px;width:100%;"></td>
+            </tr>
+            <tr>
+              <td style="border:1px solid #999;padding:0.3rem 0.6rem;background:#f5f0e8;">帳戶號碼</td>
+              <td colspan="3" style="border:1px solid #999;padding:0.3rem 0.6rem;"><input type="text" id="pf-bank-account" placeholder="請填寫完整帳號" style="border:none;outline:none;font-family:inherit;font-size:12px;width:100%;"></td>
+            </tr>
+            <tr>
+              <td style="border:1px solid #999;padding:0.3rem 0.6rem;background:#f5f0e8;">戶名</td>
+              <td colspan="3" style="border:1px solid #999;padding:0.3rem 0.6rem;"><input type="text" id="pf-bank-holder" placeholder="請填寫戶名" style="border:none;outline:none;font-family:inherit;font-size:12px;width:100%;"></td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- 送出按鈕 -->
+      <div style="margin-top:1rem;display:flex;gap:0.75rem;flex-wrap:wrap;">
+        <button onclick="submitProjectForm(${JSON.stringify(data).replace(/"/g,'&quot;')})" style="background:#c9a96e;color:#2a2118;border:none;padding:0.85rem 2rem;font-family:'Noto Serif TC',serif;font-size:0.95rem;font-weight:600;cursor:pointer;letter-spacing:0.1em;" id="pf-submit-btn">✓ 送出勞報單</button>
+      </div>
+      <div style="font-size:0.75rem;color:#8a7a6a;margin-top:0.75rem;">送出後塔塔會收到你填寫的完整勞報單 PDF</div>
+    </div>
+  `;
+  document.body.appendChild(page);
+
+  // 初始化簽名板
+  setTimeout(() => {
+    const canvas = document.getElementById('pf-sig-canvas');
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * window.devicePixelRatio;
+    canvas.height = 70 * window.devicePixelRatio;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 1.8; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    let drawing = false;
+    function pos(e) { const r=canvas.getBoundingClientRect(),s=e.touches?e.touches[0]:e; return {x:s.clientX-r.left,y:s.clientY-r.top}; }
+    canvas.addEventListener('mousedown', e=>{drawing=true;const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);document.getElementById('pf-sig-placeholder').style.display='none';});
+    canvas.addEventListener('mousemove', e=>{if(!drawing)return;const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();});
+    canvas.addEventListener('mouseup', ()=>drawing=false);
+    canvas.addEventListener('mouseleave', ()=>drawing=false);
+    canvas.addEventListener('touchstart', e=>{e.preventDefault();drawing=true;const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);document.getElementById('pf-sig-placeholder').style.display='none';},{passive:false});
+    canvas.addEventListener('touchmove', e=>{e.preventDefault();if(!drawing)return;const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();},{passive:false});
+    canvas.addEventListener('touchend', ()=>drawing=false);
+  }, 200);
+}
+
+function clearProjSig() {
+  const canvas = document.getElementById('pf-sig-canvas');
+  if (canvas) { canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height); }
+  document.getElementById('pf-sig-placeholder').style.display = '';
+}
+
+function pfPreviewID(input, imgId, phId) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = img.width; c.height = img.height;
+      const ctx = c.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      // 浮水印
+      const text = '僅限塔團有限公司請款使用';
+      const fs = Math.max(16, Math.round(img.width/22));
+      ctx.save();
+      ctx.translate(img.width/2, img.height/2);
+      ctx.rotate(-Math.PI/10);
+      ctx.font = `bold ${fs}px sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.globalAlpha = 0.22; ctx.fillStyle = '#cc3300';
+      ctx.fillText(text, 0, 0);
+      ctx.restore();
+      const el = document.getElementById(imgId);
+      el.src = c.toDataURL('image/jpeg', 0.9);
+      el.style.display = 'block';
+      document.getElementById(phId).style.display = 'none';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function submitProjectForm(data) {
+  const name    = document.getElementById('pf-name')?.value.trim();
+  const idNum   = document.getElementById('pf-id')?.value.trim();
+  const phone   = document.getElementById('pf-phone')?.value.trim();
+  const addr1   = document.getElementById('pf-addr1')?.value.trim();
+  const addr2   = document.getElementById('pf-addr2')?.value.trim();
+  const bankCode = document.getElementById('pf-bank-code')?.value.trim();
+  const bankName = document.getElementById('pf-bank-name')?.value.trim();
+  const bankAccount = document.getElementById('pf-bank-account')?.value.trim();
+  const bankHolder  = document.getElementById('pf-bank-holder')?.value.trim();
+
+  if (!idNum)   { alert('請填寫身分證字號'); return; }
+  if (!bankAccount) { alert('請填寫銀行帳號'); return; }
+
+  const APPS_SCRIPT_URL = getAppsScriptUrl();
+  if (!APPS_SCRIPT_URL) { alert('系統尚未設定，請聯絡塔塔'); return; }
+
+  const btn = document.getElementById('pf-submit-btn');
+  btn.disabled = true; btn.textContent = '送出中...';
+
+  // 生成 PDF
+  let pdfBase64 = '';
+  try {
+    const { jsPDF } = window.jspdf;
+    const laborDoc = document.getElementById('proj-labor-doc');
+
+    // 強制固定寬度截圖，避免手機版面跑掉
+    const origWidth = laborDoc.style.width;
+    const origMaxWidth = laborDoc.style.maxWidth;
+    laborDoc.style.width = '750px';
+    laborDoc.style.maxWidth = '750px';
+
+    const canvas = await html2canvas(laborDoc, {
+      scale: 2, useCORS: true, allowTaint: true,
+      backgroundColor: '#ffffff', logging: false,
+      width: 750,
+      windowWidth: 750,
+      onclone: clonedDoc => {
+        const doc = clonedDoc.getElementById('proj-labor-doc');
+        if (doc) { doc.style.width='750px'; doc.style.maxWidth='750px'; doc.style.padding='20px 28px'; }
+        clonedDoc.querySelectorAll('td,th').forEach(td => {
+          td.style.height='auto'; td.style.overflow='visible';
+          td.style.whiteSpace='normal'; td.style.minHeight='28px';
+        });
+        clonedDoc.querySelectorAll('input[type="text"],input:not([type])').forEach(inp => {
+          const span = clonedDoc.createElement('span');
+          span.textContent = inp.value;
+          span.style.cssText = 'display:inline;font-family:inherit;font-size:inherit;color:#000;';
+          inp.parentNode.replaceChild(span, inp);
+        });
+        clonedDoc.querySelectorAll('.id-cell img').forEach(img => {
+          img.style.maxWidth='100%'; img.style.maxHeight='130px'; img.style.display='block';
+        });
+      }
+    });
+
+    // 恢復原始寬度
+    laborDoc.style.width = origWidth;
+    laborDoc.style.maxWidth = origMaxWidth;
+
+    const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const margin = 12;
+    const imgW = pageW - margin * 2;
+    const imgH = (canvas.height * imgW) / canvas.width;
+
+    if (imgH <= pageH - margin * 2) {
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.85), 'JPEG', margin, margin, imgW, imgH);
+    } else {
+      let srcYpx = 0;
+      const pageHpx = ((pageH - margin * 2) / imgW) * canvas.width;
+      while (srcYpx < canvas.height) {
+        const sliceHpx = Math.min(pageHpx, canvas.height - srcYpx);
+        const sliceCanvas = document.createElement('canvas');
+        sliceCanvas.width = canvas.width;
+        sliceCanvas.height = sliceHpx;
+        sliceCanvas.getContext('2d').drawImage(canvas, 0, srcYpx, canvas.width, sliceHpx, 0, 0, canvas.width, sliceHpx);
+        pdf.addImage(sliceCanvas.toDataURL('image/jpeg', 0.85), 'JPEG', margin, margin, imgW, (sliceHpx / canvas.width) * imgW);
+        srcYpx += sliceHpx;
+        if (srcYpx < canvas.height) pdf.addPage();
+      }
+    }
+    pdfBase64 = pdf.output('datauristring').split(',')[1];
+  } catch(e) { console.warn('PDF失敗', e); }
+
+  // 壓縮身分證
+  async function compressImg(src) {
+    return new Promise(resolve => {
+      if (!src||!src.startsWith('data:')) { resolve(''); return; }
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, 800/img.width);
+        const c = document.createElement('canvas');
+        c.width=img.width*scale; c.height=img.height*scale;
+        c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+        resolve(c.toDataURL('image/jpeg',0.75).split(',')[1]);
+      };
+      img.onerror = () => resolve('');
+      img.src = src;
+    });
+  }
+
+  const frontSrc = document.getElementById('pf-front-img')?.src || '';
+  const backSrc  = document.getElementById('pf-back-img')?.src || '';
+  const [frontB64, backB64] = await Promise.all([compressImg(frontSrc), compressImg(backSrc)]);
+
+  const d = new Date(data.date);
+  const rocYear = d.getFullYear()-1911;
+  const monthLabel = `${rocYear}年${d.getMonth()+1}月`;
+
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        action: 'submitReport',
+        勞報單月份: monthLabel,
+        小團主編號: '專案合作',
+        小團主姓名: name,
+        姓名: name,
+        身分證: idNum,
+        手機: phone,
+        戶籍地址: addr1,
+        通訊地址: addr2,
+        分潤金額: data.amount,
+        銀行代碼: bankCode,
+        銀行名稱: bankName,
+        銀行帳號: bankAccount,
+        戶名: bankHolder,
+        身分證正面: frontB64 ? `data:image/jpeg;base64,${frontB64}` : '',
+        身分證反面: backB64  ? `data:image/jpeg;base64,${backB64}`  : '',
+        pdfBase64,
+      }),
+    });
+    const result = await res.json();
+    if (result.success) {
+      btn.textContent = '✓ 已送出';
+      document.querySelector('#proj-form-page .btn-row, #proj-form-page button')?.remove();
+      const thanks = document.createElement('div');
+      thanks.style.cssText = 'margin-top:1rem;background:#eafaf1;border:1px solid #a9dfbf;padding:1rem;color:#1e8449;font-size:0.9rem;';
+      thanks.textContent = '✓ 勞報單已成功送出！塔塔收到後會與你確認匯款。';
+      document.querySelector('#proj-form-page > div:last-child')?.appendChild(thanks);
+    } else { throw new Error(result.error); }
+  } catch(e) {
+    btn.disabled = false; btn.textContent = '✓ 送出勞報單';
+    alert('送出失敗，請稍後再試。');
+  }
+}
+
+
+function renderAdmin() {
+  renderProductsList();
+  renderAgentsList();
+  const url = S.get('apps_script_url') || '';
+  const el = document.getElementById('apps-script-url');
+  if (el) el.value = url;
+}
+
+function saveScriptUrl() {
+  const url = document.getElementById('apps-script-url').value.trim();
+  S.set('apps_script_url', url);
+  const ind = document.getElementById('save-url-indicator');
+  ind.classList.add('show'); setTimeout(() => ind.classList.remove('show'), 2000);
+}
+
+function renderProductsList() {
+  document.getElementById('products-list').innerHTML = getProducts().map((p,i)=>`
+    <div class="product-row">
+      <input class="pname-input" type="text" value="${p.name}" id="pname-${i}">
+      <input type="number" min="0" max="100" value="${p.rate}" id="prate-${i}">
+      <span class="unit">%</span>
+      <button style="background:none;border:1px solid var(--border);padding:0.2rem 0.6rem;font-size:0.75rem;cursor:pointer;color:var(--mid);" onclick="removeProduct(${i})">刪除</button>
+    </div>
+  `).join('');
+}
+
+function addProduct() { const p=getProducts(); p.push({id:'p'+Date.now(),name:'新產品',rate:10}); S.set('products',p); renderProductsList(); }
+function removeProduct(i) { const p=getProducts(); p.splice(i,1); S.set('products',p); renderProductsList(); }
+function saveProducts() {
+  const rows=document.querySelectorAll('#products-list .product-row');
+  const ex=getProducts();
+  S.set('products',Array.from(rows).map((_,i)=>({id:ex[i]?.id||'p'+Date.now()+i,name:document.getElementById('pname-'+i).value.trim(),rate:parseFloat(document.getElementById('prate-'+i).value)||0})));
+  loadProductSelect();
+  const ind=document.getElementById('save-product-indicator');
+  ind.classList.add('show'); setTimeout(()=>ind.classList.remove('show'),2000);
+}
+
+function renderAgentsList() {
+  document.getElementById('agents-body').innerHTML = getAgents().map((a,i)=>`
+    <tr>
+      <td><input value="${a.id}" id="aid-${i}"></td>
+      <td><input value="${a.name}" id="aname-${i}"></td>
+      <td><input type="text" value="${a.pw}" id="apw-${i}"></td>
+      <td>${a.isAdmin?'<span class="badge">ADMIN</span>':`<button style="background:none;border:1px solid var(--border);padding:0.2rem 0.6rem;font-size:0.75rem;cursor:pointer;" onclick="removeAgent(${i})">刪除</button>`}</td>
+    </tr>
+  `).join('');
+}
+function addAgent() { const a=getAgents(); a.push({id:'A'+String(a.length).padStart(3,'0'),name:'新小團主',pw:'0000',isAdmin:false}); S.set('agents',a); renderAgentsList(); }
+function removeAgent(i) { const a=getAgents(); if(a[i].isAdmin){alert('不可刪除管理員');return;} a.splice(i,1); S.set('agents',a); renderAgentsList(); }
+function saveAgents() {
+  const a=getAgents().map((ag,i)=>({...ag,id:document.getElementById('aid-'+i)?.value.trim()||ag.id,name:document.getElementById('aname-'+i)?.value.trim()||ag.name,pw:document.getElementById('apw-'+i)?.value||ag.pw}));
+  S.set('agents',a);
+  const ind=document.getElementById('save-agent-indicator');
+  ind.classList.add('show'); setTimeout(()=>ind.classList.remove('show'),2000);
+}
+</script>
+</body>
+</html>
